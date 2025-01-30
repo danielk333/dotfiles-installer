@@ -1,0 +1,2 @@
+[console_scripts]
+dotcli = dotinstaller.cli:run

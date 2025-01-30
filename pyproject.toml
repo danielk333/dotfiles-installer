@@ -1,0 +1,26 @@
+[project]
+name = "dotinstaller"
+authors = [
+    {name = "Daniel Kastinen", email = "waxarn333@gmail.com"},
+]
+description = "A simple dotfiles installer"
+dynamic = ["version"]
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "GPL-3.0"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = []
+
+[project.optional-dependencies]
+tui = ["urwid"]
+
+[tool.setuptools.packages]
+find = {}
+
+[project.scripts]
+dotcli = "dotinstaller.cli:run"
+
+[tool.setuptools.dynamic]
+version = {attr = "dotinstaller.__version__"}

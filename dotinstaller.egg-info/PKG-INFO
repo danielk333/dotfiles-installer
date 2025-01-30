@@ -1,0 +1,15 @@
+Metadata-Version: 2.2
+Name: dotinstaller
+Version: 0.0.0
+Summary: A simple dotfiles installer
+Author-email: Daniel Kastinen <waxarn333@gmail.com>
+License: GPL-3.0
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: tui
+Requires-Dist: urwid; extra == "tui"
+
+# dotfiles-installer
+A simple host based dot-files installer that saves a config and allows to progressively add or remove from it
