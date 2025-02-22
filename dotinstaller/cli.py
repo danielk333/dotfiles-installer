@@ -2,11 +2,12 @@ import argparse
 import socket
 from pathlib import Path
 import os
+import logging
 
 from . import settings
 from .dotinit import init, new_host
 from .dotmanage import add_dotfile
-from .dotinstall import install
+from .dotinstall import install, install_dotfile
 
 try:
     from .tui import run_app
@@ -35,9 +36,16 @@ def add_command(name, action, **kwargs):
 
 @add_command("add", add_dotfile, help="Add dotfiles to the dotfiles repo")
 def build_add_dotfile(parser: argparse.ArgumentParser):
-    parser.add_argument("path")
     parser.add_argument(
-        "--hostname",
+        "target",
+        help="which dotfiles target to store the path under in the repo",
+    )
+    parser.add_argument(
+        "path",
+        help="Path to dotfiles file or folder to store in repo",
+    )
+    parser.add_argument(
+        "-H", "--hostname",
         default="default",
         help="Host to add path to",
     )
@@ -47,10 +55,20 @@ def build_add_dotfile(parser: argparse.ArgumentParser):
     return parser
 
 
+@add_command("install-dotfile", install_dotfile, help="Install a specific dotfile")
+def build_install_dotfile(parser: argparse.ArgumentParser):
+    parser.add_argument("target", help="Name of dotfile target")
+    parser.add_argument("name", help="Name of dotfile")
+    parser.add_argument(
+        "--hostname", default=socket.gethostname(), help="Host config to read from"
+    )
+    return parser
+
+
 @add_command("install", install, help="Install according to a config")
 def build_install(parser: argparse.ArgumentParser):
     parser.add_argument(
-        "--hostname", default=socket.hostname(), help="Host config to install"
+        "--hostname", default=socket.gethostname(), help="Host config to install"
     )
     return parser
 
@@ -59,7 +77,7 @@ def build_install(parser: argparse.ArgumentParser):
 def build_new_host(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--hostname",
-        default=socket.hostname(),
+        default=socket.gethostname(),
         help="Hostname to start a new config for",
     )
     return parser
@@ -92,10 +110,10 @@ def run():
     if args.command is None:
         parser.print_help()
         return
+    logging.basicConfig(level=args.log)
     action = COMMAND_MAP[args.command][0]
 
     base_dir = Path(os.getcwd())
-    config = settings.get_config(base_dir)
-    paths = settings.PathStore(config, base_dir)
+    paths = settings.PathStore(base_dir)
 
-    action(args, config, paths)
+    action(args, paths)
