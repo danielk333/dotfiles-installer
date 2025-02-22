@@ -20,7 +20,8 @@ def append_dotfile_config(paths, name, source_host, target):
 
 def add_dotfile(args, paths):
     src_path = Path(args.path).resolve().absolute()
-    repo_path = paths.dotfiles / args.hostname / args.target / src_path.name
+    source_host = socket.gethostname() if args.localhost else "default"
+    repo_path = paths.dotfiles / source_host / args.target / src_path.name
     repo_path = repo_path.resolve().absolute()
     if repo_path.exists():
         raise FileExistsError(
@@ -42,7 +43,7 @@ def add_dotfile(args, paths):
         old_path.symlink_to(repo_path)
         logging.info(f"moved {old_path} -> {repo_path}")
         logging.info(f"linked {old_path} -> {repo_path}")
-        append_dotfile_config(paths, repo_path.name, args.hostname, args.target)
+        append_dotfile_config(paths, repo_path.name, source_host, args.target)
     else:
         if src_path.is_dir():
             shutil.copytree(src_path, repo_path)

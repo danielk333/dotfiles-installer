@@ -7,7 +7,7 @@ import logging
 from . import settings
 from .dotinit import init, new_host
 from .dotmanage import add_dotfile
-from .dotinstall import install, install_dotfile
+from .dotinstall import install, install_dotfile, install_tool
 
 try:
     from .tui import run_app
@@ -45,12 +45,24 @@ def build_add_dotfile(parser: argparse.ArgumentParser):
         help="Path to dotfiles file or folder to store in repo",
     )
     parser.add_argument(
-        "-H", "--hostname",
-        default="default",
-        help="Host to add path to",
+        "-L", "--localhost",
+        action="store_true",
+        help="If true store the config to the local host config rather than the default",
     )
     parser.add_argument(
-        "-i", "--install", action="store_true", help="Remove and install to this host"
+        "-i", "--install",
+        action="store_true",
+        help="Remove and install to this host",
+    )
+    return parser
+
+
+@add_command("install-tool", install_tool, help="Install a specific dotfile")
+def build_install_tool(parser: argparse.ArgumentParser):
+    parser.add_argument("lang", help="Tool implementation")
+    parser.add_argument("name", help="Name of tool")
+    parser.add_argument(
+        "--hostname", default=socket.gethostname(), help="Host config to read from"
     )
     return parser
 

@@ -1,9 +1,9 @@
-import configparser
-from pathlib import Path
-
 HOST_DEFAULT = {
     "dotfiles": {},
-    "tools": {},
+    "tools": {
+        "bash": "",
+        "python": "",
+    },
     "packages": {
         "pacman": "",
     },
@@ -14,12 +14,13 @@ HOST_DEFAULT = {
     },
 }
 
+
 # The folder structure idea is:
 # dotfiles / {host} / {target} / "dotfile"
 # configs / "host config"
 # tools / "tool"
 #
-# That way there can be the same dotfile for multiple hosts and 
+# That way there can be the same dotfile for multiple hosts and
 # with different targets like ssh folder
 class PathStore:
     def __init__(self, base_dir):
@@ -38,5 +39,3 @@ class PathStore:
             self.tools,
             self.configs,
         ]
-
-
