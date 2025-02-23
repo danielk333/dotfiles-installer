@@ -6,7 +6,7 @@ import logging
 
 from . import settings
 from .dotinit import init, new_host
-from .dotmanage import add_dotfile
+from .dotmanage import add_dotfile, specialize
 from .dotinstall import (
     install,
     install_dotfile,
@@ -69,7 +69,7 @@ def build_add_dotfile(parser: argparse.ArgumentParser):
 
 
 @add_command("wallpapers", link_wallpapers, help="Install wallpapers")
-def build_install_tool(parser: argparse.ArgumentParser):
+def build_wallpapers(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--hostname", default=socket.gethostname(), help="Host config to read from"
     )
@@ -77,7 +77,7 @@ def build_install_tool(parser: argparse.ArgumentParser):
 
 
 @add_command("install-tools", install_tools, help="Install all tools")
-def build_install_tool(parser: argparse.ArgumentParser):
+def build_install_tools(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--hostname", default=socket.gethostname(), help="Host config to read from"
     )
@@ -112,6 +112,20 @@ def build_install_dotfile(parser: argparse.ArgumentParser):
     )
     parser.add_argument(
         "--hostname", default=socket.gethostname(), help="Host config to read from"
+    )
+    return parser
+
+
+@add_command(
+    "specialize",
+    specialize,
+    help="Move from using a dotfile from default to host specific",
+)
+def build_specialize(parser: argparse.ArgumentParser):
+    parser.add_argument("target", help="Name of dotfile target")
+    parser.add_argument("name", help="Name of dotfile")
+    parser.add_argument(
+        "--hostname", default=socket.gethostname(), help="Host config to move to"
     )
     return parser
 
