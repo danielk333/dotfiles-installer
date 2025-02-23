@@ -9,6 +9,7 @@ HOST_DEFAULT = {
     },
     "targets": {
         "tools": "~/.local/bin/",
+        "wallpapers": "~/wallpapers/",
         "dotfiles/ssh": "~/.ssh/",
         "dotfiles/config": "~/.config/",
     },
@@ -30,6 +31,7 @@ class PathStore:
         self.default_host = self.dotfiles / "default"
 
         self.tools = base_dir / "tools"
+        self.wallpapers = base_dir / "wallpapers"
         self.configs = base_dir / "configs"
         self.lockfile = base_dir / ".dotinstaller"
 
@@ -38,4 +40,5 @@ class PathStore:
             self.default_host,
             self.tools,
             self.configs,
+            self.wallpapers,
         ]

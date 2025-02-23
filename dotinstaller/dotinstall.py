@@ -5,12 +5,22 @@ from pathlib import Path
 logger = logging.getLogger(__file__)
 
 
+def link_wallpapers(args, paths):
+    host_path = paths.configs / f"{args.hostname}.cfg"
+    cfg = configparser.ConfigParser()
+    cfg.read(host_path)
+
+    target_path = Path(cfg.get("targets", "wallpapers"))
+    target_path = target_path.expanduser().absolute()
+    target_path.symlink_to(paths.wallpapers)
+
+
 def link_tool(cfg, paths, lang, name):
-    repo_path = (paths.tools / lang / name).resolve().absolute()
+    repo_path = (paths.tools / lang / name).expanduser().absolute()
     assert repo_path.exists(), f"The files do not exists in dotfiles repo\n{repo_path}"
 
     target_path = Path(cfg.get("targets", "tools"))
-    target_path = (target_path / name).expanduser().resolve().absolute()
+    target_path = (target_path / name).expanduser().absolute()
     assert (
         not target_path.exists()
     ), f"Target path for symlink already exists\n{target_path}"
@@ -21,11 +31,11 @@ def link_tool(cfg, paths, lang, name):
 
 def link_dotfile(cfg, paths, target, name):
     src_host = cfg.get("dotfiles", f"{target}/{name}")
-    repo_path = (paths.dotfiles / src_host / target / name).resolve().absolute()
+    repo_path = (paths.dotfiles / src_host / target / name).expanduser().absolute()
     assert repo_path.exists(), f"The files do not exists in dotfiles repo\n{repo_path}"
 
     target_path = Path(cfg.get("targets", f"dotfiles/{target}"))
-    target_path = (target_path / name).expanduser().resolve().absolute()
+    target_path = (target_path / name).expanduser().absolute()
     assert (
         not target_path.exists()
     ), f"Target path for symlink already exists\n{target_path}"
@@ -39,12 +49,47 @@ def install_tool(args, paths):
     host_config = configparser.ConfigParser()
     host_config.read(host_path)
 
-    target_path = Path(host_config.get("targets", "tools")).expanduser()
+    target_path = Path(host_config.get("targets", "tools")).expanduser().absolute()
+    if not target_path.is_dir():
+        logger.info(f"target path does not exist, creating... {target_path}")
+        target_path.mkdir(parents=True)
+    
+    tools = host_config.get("tools", args.lang, fallback="")
+    tools = [x.strip() for x in tools.split(",") if len(x.strip()) > 0]
+    if args.name not in tools:
+        tools.append(args.name)
+        host_config["tools"][args.lang] = ",".join(tools)
+    with open(host_path, "w") as fh:
+        host_config.write(fh)
+
+    link_tool(host_config, paths, args.lang, args.name)
+
+
+def install_tools(args, paths):
+    host_path = paths.configs / f"{args.hostname}.cfg"
+    host_config = configparser.ConfigParser()
+    host_config.read(host_path)
+
+    target_path = Path(host_config.get("targets", "tools")).expanduser().absolute()
     if not target_path.is_dir():
         logger.info(f"target path does not exist, creating... {target_path}")
         target_path.mkdir(parents=True)
 
-    link_tool(host_config, paths, args.lang, args.name)
+    avalible_langs = [x.name for x in paths.tools.iterdir() if x.is_dir()]
+    for lang in avalible_langs:
+        avalible_tools = [x.name for x in (paths.tools / lang).iterdir() if x.is_file()]
+
+        tools = host_config.get("tools", lang, fallback="")
+        tools = [x.strip() for x in tools.split(",") if len(x.strip()) > 0]
+        for tool in avalible_tools:
+            if tool not in tools:
+                tools.append(tool)
+                link_tool(host_config, paths, lang, tool)
+
+        host_config["tools"][lang] = ",".join(tools)
+
+    with open(host_path, "w") as fh:
+        host_config.write(fh)
 
 
 def install_dotfile(args, paths):
@@ -52,7 +97,12 @@ def install_dotfile(args, paths):
     host_config = configparser.ConfigParser()
     host_config.read(host_path)
 
+    host_config["dotfiles"][f"{args.target}/{args.name}"] = args.source_host
     link_dotfile(host_config, paths, args.target, args.name)
+
+    with open(host_path, "w") as fh:
+        host_config.write(fh)
+    logging.info(f"Appending dotfile to {host_path} config")
 
 
 def install(args, paths):
@@ -61,10 +111,24 @@ def install(args, paths):
     host_config.read(host_path)
 
     for key, source_host in host_config.items("dotfiles"):
-        target, name = key.split("/")
+        target, name = key.split("/", maxsplit=1)
+
+        target_path = Path(host_config.get("targets", f"dotfiles/{target}"))
+        link_path = (target_path / name).expanduser().absolute()
+        if link_path.is_symlink():
+            logger.info(f"symlink detected, skipping {link_path}")
+            continue
+
         link_dotfile(host_config, paths, target, name)
 
     for lang, tools in host_config.items("tools"):
         tools = [x.strip() for x in tools.split(",")]
+        target_path = Path(host_config.get("targets", "tools"))
         for tool in tools:
+            link_path = (target_path / tool).expanduser().absolute()
+            if link_path.is_symlink():
+                logger.info(f"symlink detected, skipping {link_path}")
+                continue
+
             link_tool(host_config, paths, lang, tool)
+

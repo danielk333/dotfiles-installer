@@ -7,7 +7,13 @@ import logging
 from . import settings
 from .dotinit import init, new_host
 from .dotmanage import add_dotfile
-from .dotinstall import install, install_dotfile, install_tool
+from .dotinstall import (
+    install,
+    install_dotfile,
+    install_tool,
+    install_tools,
+    link_wallpapers,
+)
 
 try:
     from .tui import run_app
@@ -45,19 +51,40 @@ def build_add_dotfile(parser: argparse.ArgumentParser):
         help="Path to dotfiles file or folder to store in repo",
     )
     parser.add_argument(
-        "-L", "--localhost",
+        "--hostname", default=socket.gethostname(), help="Host config to read from"
+    )
+    parser.add_argument(
+        "-L",
+        "--localhost",
         action="store_true",
         help="If true store the config to the local host config rather than the default",
     )
     parser.add_argument(
-        "-i", "--install",
+        "-i",
+        "--install",
         action="store_true",
         help="Remove and install to this host",
     )
     return parser
 
 
-@add_command("install-tool", install_tool, help="Install a specific dotfile")
+@add_command("wallpapers", link_wallpapers, help="Install wallpapers")
+def build_install_tool(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--hostname", default=socket.gethostname(), help="Host config to read from"
+    )
+    return parser
+
+
+@add_command("install-tools", install_tools, help="Install all tools")
+def build_install_tool(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--hostname", default=socket.gethostname(), help="Host config to read from"
+    )
+    return parser
+
+
+@add_command("install-tool", install_tool, help="Install a specific tool")
 def build_install_tool(parser: argparse.ArgumentParser):
     parser.add_argument("lang", help="Tool implementation")
     parser.add_argument("name", help="Name of tool")
@@ -71,6 +98,12 @@ def build_install_tool(parser: argparse.ArgumentParser):
 def build_install_dotfile(parser: argparse.ArgumentParser):
     parser.add_argument("target", help="Name of dotfile target")
     parser.add_argument("name", help="Name of dotfile")
+    parser.add_argument(
+        "-S",
+        "--source_host",
+        default="default",
+        help="Install from given source host variant",
+    )
     parser.add_argument(
         "--hostname", default=socket.gethostname(), help="Host config to read from"
     )
