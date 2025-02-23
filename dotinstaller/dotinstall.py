@@ -29,16 +29,19 @@ def link_tool(cfg, paths, lang, name):
     target_path.symlink_to(repo_path)
 
 
-def link_dotfile(cfg, paths, target, name):
+def link_dotfile(cfg, paths, target, name, clobber=False):
     src_host = cfg.get("dotfiles", f"{target}/{name}")
     repo_path = (paths.dotfiles / src_host / target / name).expanduser().absolute()
     assert repo_path.exists(), f"The files do not exists in dotfiles repo\n{repo_path}"
 
     target_path = Path(cfg.get("targets", f"dotfiles/{target}"))
     target_path = (target_path / name).expanduser().absolute()
-    assert (
-        not target_path.exists()
-    ), f"Target path for symlink already exists\n{target_path}"
+    if target_path.exists():
+        if clobber:
+            logger.info(f"Target path {target_path} exists, deleting...")
+            target_path.unlink()
+        else:
+            raise FileExistsError(f"Target path for symlink already exists\n{target_path}")
 
     logger.info(f"linking {target_path} -> {repo_path}")
     target_path.symlink_to(repo_path)
@@ -53,7 +56,7 @@ def install_tool(args, paths):
     if not target_path.is_dir():
         logger.info(f"target path does not exist, creating... {target_path}")
         target_path.mkdir(parents=True)
-    
+
     tools = host_config.get("tools", args.lang, fallback="")
     tools = [x.strip() for x in tools.split(",") if len(x.strip()) > 0]
     if args.name not in tools:
@@ -98,7 +101,7 @@ def install_dotfile(args, paths):
     host_config.read(host_path)
 
     host_config["dotfiles"][f"{args.target}/{args.name}"] = args.source_host
-    link_dotfile(host_config, paths, args.target, args.name)
+    link_dotfile(host_config, paths, args.target, args.name, clobber=args.clobber)
 
     with open(host_path, "w") as fh:
         host_config.write(fh)
@@ -131,4 +134,3 @@ def install(args, paths):
                 continue
 
             link_tool(host_config, paths, lang, tool)
-

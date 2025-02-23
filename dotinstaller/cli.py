@@ -99,6 +99,12 @@ def build_install_dotfile(parser: argparse.ArgumentParser):
     parser.add_argument("target", help="Name of dotfile target")
     parser.add_argument("name", help="Name of dotfile")
     parser.add_argument(
+        "-C",
+        "--clobber",
+        action="store_true",
+        help="Clobber existing file if it exists",
+    )
+    parser.add_argument(
         "-S",
         "--source_host",
         default="default",
