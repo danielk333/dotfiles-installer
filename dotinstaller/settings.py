@@ -12,6 +12,7 @@ HOST_DEFAULT = {
         "wallpapers": "~/wallpapers/",
         "dotfiles/ssh": "~/.ssh/",
         "dotfiles/config": "~/.config/",
+        "dotfiles/home": "~/",
     },
 }
 
