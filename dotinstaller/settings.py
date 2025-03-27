@@ -13,6 +13,7 @@ HOST_DEFAULT = {
         "dotfiles/ssh": "~/.ssh/",
         "dotfiles/config": "~/.config/",
         "dotfiles/home": "~/",
+        "dotfiles/etc": "/etc/",
     },
 }
 
