@@ -1,3 +1,4 @@
+import os
 import logging
 import configparser
 from pathlib import Path
@@ -101,7 +102,11 @@ def install_dotfile(args, paths):
     host_config.read(host_path)
 
     host_config["dotfiles"][f"{args.target}/{args.name}"] = args.source_host
-    link_dotfile(host_config, paths, args.target, args.name, clobber=args.clobber)
+    try:
+        link_dotfile(host_config, paths, args.target, args.name, clobber=args.clobber)
+    except PermissionError:
+        logging.error("PermissionError: cannot install dotfile, skipping")
+        return
 
     with open(host_path, "w") as fh:
         host_config.write(fh)
