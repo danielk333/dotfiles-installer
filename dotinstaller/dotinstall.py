@@ -22,12 +22,14 @@ def link_tool(cfg, paths, lang, name):
 
     target_path = Path(cfg.get("targets", "tools"))
     target_path = (target_path / name).expanduser().absolute()
-    assert (
-        not target_path.exists()
-    ), f"Target path for symlink already exists\n{target_path}"
-
-    logger.info(f"linking {target_path} -> {repo_path}")
-    target_path.symlink_to(repo_path)
+    if target_path.exists():
+        if target_path.is_symlink():
+            logger.warning(f"Target path is already symlink, skipping\n{target_path}")
+        else:
+            logger.warning(f"Target path exists, skipping\n{target_path}")
+    else:
+        logger.info(f"linking {target_path} -> {repo_path}")
+        target_path.symlink_to(repo_path)
 
 
 def link_dotfile(cfg, paths, target, name, clobber=False):
@@ -85,15 +87,10 @@ def install_tools(args, paths):
 
         tools = host_config.get("tools", lang, fallback="")
         tools = [x.strip() for x in tools.split(",") if len(x.strip()) > 0]
-        for tool in avalible_tools:
-            if tool not in tools:
-                tools.append(tool)
+        for tool in tools:
+            if tool in avalible_tools:
+                logger.info(f"installing {tool}")
                 link_tool(host_config, paths, lang, tool)
-
-        host_config["tools"][lang] = ",".join(tools)
-
-    with open(host_path, "w") as fh:
-        host_config.write(fh)
 
 
 def install_dotfile(args, paths):
