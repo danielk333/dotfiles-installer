@@ -6,7 +6,7 @@ import logging
 
 from . import settings
 from .dotinit import init, new_host
-from .dotmanage import add_dotfile, specialize
+from .dotmanage import add_dotfile, remove_dotfile, specialize
 from .dotinstall import (
     install,
     install_dotfile,
@@ -64,6 +64,34 @@ def build_add_dotfile(parser: argparse.ArgumentParser):
         "--install",
         action="store_true",
         help="Remove and install to this host",
+    )
+    return parser
+
+
+@add_command("remove", remove_dotfile, help="Remove dotfiles from the dotfiles repo")
+def build_remove_dotfile(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "target",
+        help="which dotfiles target the path is stored under in the repo",
+    )
+    parser.add_argument(
+        "path",
+        help="Path to dotfiles file or folder in repo",
+    )
+    parser.add_argument(
+        "--hostname", default=socket.gethostname(), help="Host config to read from"
+    )
+    parser.add_argument(
+        "-L",
+        "--localhost",
+        action="store_true",
+        help="If true remove the config from the local host config rather than the default",
+    )
+    parser.add_argument(
+        "-r",
+        "--remove",
+        action="store_true",
+        help="Remove and restore file on this host",
     )
     return parser
 

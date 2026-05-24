@@ -19,7 +19,9 @@ def specialize(args, paths):
 
     src_host = host_config.get("dotfiles", f"{args.target}/{args.name}")
     repo_path = (paths.dotfiles / src_host / args.target / args.name).absolute()
-    new_repo_path = (paths.dotfiles / args.hostname / args.target / args.name).absolute()
+    new_repo_path = (
+        paths.dotfiles / args.hostname / args.target / args.name
+    ).absolute()
 
     if not new_repo_path.parent.is_dir():
         new_repo_path.parent.mkdir(parents=True)
@@ -39,16 +41,69 @@ def specialize(args, paths):
     link_path.symlink_to(new_repo_path)
 
 
+def trunc_dotfile_config(paths, rel_path, source_host, target):
+    hostname = socket.gethostname()
+    rel_name = str(rel_path)
+    logger.info(
+        f"remove {target}/{rel_path} from {hostname} config from {source_host} dotfiles"
+    )
+    host_path = paths.configs / f"{hostname}.cfg"
+    host_config = configparser.ConfigParser()
+    host_config.read(host_path)
+    host_config.remove_option("dotfiles", f"{target}/{rel_name}")
+    with open(host_path, "w") as fh:
+        host_config.write(fh)
+
+
 def append_dotfile_config(paths, rel_path, source_host, target):
     hostname = socket.gethostname()
     rel_name = str(rel_path)
-    logger.info(f"adding {target}/{rel_path} to {hostname} config from {source_host} dotfiles")
+    logger.info(
+        f"adding {target}/{rel_path} to {hostname} config from {source_host} dotfiles"
+    )
     host_path = paths.configs / f"{hostname}.cfg"
     host_config = configparser.ConfigParser()
     host_config.read(host_path)
     host_config["dotfiles"][f"{target}/{rel_name}"] = source_host
     with open(host_path, "w") as fh:
         host_config.write(fh)
+
+
+def remove_dotfile(args, paths):
+    src_path = Path(args.path).expanduser().absolute()
+    source_host = socket.gethostname() if args.localhost else "default"
+
+    host_path = paths.configs / f"{args.hostname}.cfg"
+    host_config = configparser.ConfigParser()
+    host_config.read(host_path)
+    target_path = Path(host_config.get("targets", f"dotfiles/{args.target}"))
+    target_path = target_path.expanduser().absolute()
+
+    rel_path = src_path.relative_to(target_path)
+    repo_path = paths.dotfiles / source_host / args.target / rel_path
+    if not repo_path.exists():
+        raise FileNotFoundError(
+            "Path does not exists for host on this repo\n"
+            "Maybe choose another host or target?"
+        )
+    logger.info("Repo store verified exists")
+
+    host_path = paths.configs / f"{socket.gethostname()}.cfg"
+    if args.remove and not host_path.is_file():
+        raise FileNotFoundError(
+            f"No host config {host_path} exists, cannot uninstall. Create new host config first"
+        )
+
+    if args.remove:
+        old_path = Path(str(repo_path))
+        src_path.unlink()
+        repo_path.rename(src_path)
+        logger.info(f"removed {src_path}")
+        logger.info(f"moved {old_path} -> {repo_path}")
+    else:
+        repo_path.unlink()
+        logger.info(f"removed {repo_path}")
+    trunc_dotfile_config(paths, rel_path, source_host, args.target)
 
 
 def add_dotfile(args, paths):
